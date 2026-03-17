@@ -1,0 +1,44 @@
+{
+  "_schema_version": "2.0",
+  "_description": "Persistent ID tracker for BrdAnalyzer v3.0 — prevents duplicate REQ IDs across sessions. Do not edit manually.",
+  "_agent": "BrdAnalyzer.agent.md",
+  "_last_updated": "ISO-8601 timestamp of last agent run",
+  "last_functional_id": 0,
+  "last_nonfunctional_id": 0,
+  "last_compliance_id": 0,
+  "last_assumption_id": 0,
+  "last_risk_id": 0,
+  "last_question_id": 0,
+  "run_history": [],
+  "session_template": {
+    "run_id": "uuid-v4",
+    "timestamp": "ISO-8601",
+    "brd_files": [],
+    "companion_artifacts": {
+      "frd": [],
+      "trd": [],
+      "ui_designs": [],
+      "data_files": []
+    },
+    "non_processable_artifacts": [],
+    "req_id_range": {
+      "functional": {"start": 0, "end": 0},
+      "non_functional": {"start": 0, "end": 0},
+      "compliance": {"start": 0, "end": 0}
+    },
+    "total_requirements": 0,
+    "greenfield": false,
+    "compliance_regulations_detected": [],
+    "quality_scores": {
+      "completeness": 0,
+      "clarity": 0,
+      "testability": 0,
+      "traceability": 0
+    },
+    "open_questions": {
+      "p0": 0,
+      "p1": 0,
+      "p2": 0
+    }
+  }
+}
