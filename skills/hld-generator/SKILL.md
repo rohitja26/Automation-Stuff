@@ -1,7 +1,7 @@
 ---
 name: hld-generator
 description: >
-  Load this skill at Step 3 of the Architecture Design Agent. Produces the
+  Load this skill at Step 5 of the Architecture Design Agent (v3.2.2). Produces the
   High-Level Design document from domain_model.json + architecture_handoff.json.
   Every design decision must cite a requirement ID, NFR target, or explicit
   constraint. Architecture style (monolith/microservices/serverless) is determined

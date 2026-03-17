@@ -88,19 +88,21 @@ The architecture agent checkpoints at the **step level** (coarser than BRD agent
   "brd_run_id": "uuid from architecture_handoff.json",
 
   "steps": {
-    "step_1_brd_parser":    {"status": "completed | in_progress | pending", "completed_at": null},
-    "step_2_domain_model":  {"status": "pending", "completed_at": null},
-    "step_3_hld":           {"status": "pending", "completed_at": null},
-    "step_4_lld":           {"status": "pending", "completed_at": null, "contexts_completed": [], "contexts_pending": []}
+    "step_1_brd_parser":        {"status": "completed | in_progress | pending", "completed_at": null},
+    "step_2_tech_consultation":  {"status": "pending", "completed_at": null},
+    "step_3_domain_model":       {"status": "pending", "completed_at": null},
+    "step_4_fdd":                {"status": "pending", "completed_at": null},
+    "step_5_hld":                {"status": "pending", "completed_at": null},
+    "step_6_lld":                {"status": "pending", "completed_at": null, "contexts_completed": [], "contexts_pending": []},
+    "step_7_sdd":                {"status": "pending", "completed_at": null},
+    "step_8_tdd":                {"status": "pending", "completed_at": null},
+    "step_9_decision_log":       {"status": "pending", "completed_at": null},
+    "step_10_self_validation":   {"status": "pending", "completed_at": null}
   },
 
-  "step_4_progress": {
+  "step_6_progress": {
     "api_contracts_written": [],
     "db_schemas_written": [],
-    "fdd_written": false,
-    "sdd_written": false,
-    "decision_log_written": false,
-    "tdd_written": false,
     "traceability_backwrite_done": false
   },
 
@@ -116,11 +118,17 @@ The architecture agent checkpoints at the **step level** (coarser than BRD agent
 
 **Write frequency**:
 - After Step 1 completes: mark `step_1_brd_parser: completed`
-- After domain_model.json is written: mark `step_2_domain_model: completed`
-- After hld.json is written: mark `step_3_hld: completed`
-- After each API contract written: append to `api_contracts_written[]`
-- After each DB schema written: append to `db_schemas_written[]`
-- After traceability back-write: mark `traceability_backwrite_done: true`
+- After technology_stack.json is written: mark `step_2_tech_consultation: completed`
+- After domain_model.json is written: mark `step_3_domain_model: completed`
+- After fdd.json is written: mark `step_4_fdd: completed`
+- After hld.json is written: mark `step_5_hld: completed`
+- After each API contract written: append to `step_6_progress.api_contracts_written[]`
+- After each DB schema written: append to `step_6_progress.db_schemas_written[]`
+- After Step 6 complete: mark `step_6_lld: completed`
+- After sdd.json is written: mark `step_7_sdd: completed`
+- After tdd.json is written: mark `step_8_tdd: completed`
+- After decision_log.json + traceability back-write: mark `step_9_decision_log: completed`
+- After self-validation passes: mark `step_10_self_validation: completed`
 
 Use `vscode/str_replace` to patch only the changed fields. Never rewrite the entire checkpoint.
 
@@ -216,9 +224,9 @@ On Architecture Design Agent startup, after readiness gate passes:
    - Re-load the context object (reconstruct from `architecture_handoff.json` — already on disk)
 4. If Start fresh: archive `/architecture/` to `/architecture/archive-{timestamp}/`, delete checkpoint, start from Step 1
 
-**Why step-level resume is sufficient**: Each step produces a complete file (domain_model.json, hld.json). If step 3 completed successfully, hld.json is valid and on disk. No need for sub-step recovery — just skip the completed step.
+**Why step-level resume is sufficient**: Each step produces a complete file (domain_model.json, hld.json, fdd.json, etc.). If step 5 completed successfully, hld.json is valid and on disk. No need for sub-step recovery — just skip the completed step.
 
-**Exception**: Step 4 (LLD) is long and context-intensive. It has context-level granularity: `api_contracts_written[]` and `db_schemas_written[]` track which contexts are done. Resume within Step 4 is supported.
+**Exception**: Step 6 (LLD) is long and context-intensive. It has context-level granularity: `api_contracts_written[]` and `db_schemas_written[]` track which contexts are done. Resume within Step 6 is supported.
 
 ---
 
@@ -228,12 +236,17 @@ Architecture agents load one skill at a time, maximum. After a step completes an
 
 | Architecture agent step | Skill in context |
 |---|---|
-| Step 1 — BRD Parser | architecture-context + brd-parser |
-| Step 2 — Domain Modeler | architecture-context + domain-modeler |
-| Step 3 — HLD Generator | architecture-context + hld-generator |
-| Step 4a — LLD Generator | architecture-context + lld-generator |
-| Step 4b — Output Assembly | architecture-context + output-architect |
-| Validator Check 1–5 | architecture-context + architecture-validator |
+| Step 1 — BRD Parser + Quality Gate | architecture-context + brd-parser |
+| Step 2 — Technology Consultation | architecture-context only (interactive) |
+| Step 3 — Domain Modeler | architecture-context + domain-modeler |
+| Step 4 — FDD Generation | architecture-context only (uses feature_groups + user_journeys) |
+| Step 5 — HLD Generator | architecture-context + hld-generator |
+| Step 6 — LLD Generator | architecture-context + lld-generator |
+| Step 7 — SDD Generation | architecture-context only (uses data_flow_map) |
+| Step 8 — TDD Generation | architecture-context only (uses requirements + business_rules) |
+| Step 9 — Decision Log + Traceability | architecture-context + output-architect |
+| Step 10 — Self-Validation | architecture-context only |
+| Validator Check 1–8 | architecture-context + architecture-validator |
 
 Never load two non-context skills simultaneously. The architecture-context skill stays loaded throughout the entire run.
 

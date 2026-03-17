@@ -1,7 +1,7 @@
 ---
 name: lld-generator
 description: >
-  Load this skill at Step 4 of the Architecture Design Agent. Produces API
+  Load this skill at Step 6 of the Architecture Design Agent (v3.2.2). Produces API
   contracts (OpenAPI), DB schemas, module structures, validation rules, and
   error handling patterns. Derives everything from domain_model.json and
   hld.json. Every API endpoint traces back to a requirement ID. Every DB field

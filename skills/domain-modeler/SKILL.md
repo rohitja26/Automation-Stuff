@@ -1,7 +1,7 @@
 ---
 name: domain-modeler
 description: >
-  Load this skill at Step 2 of the Architecture Design Agent. Takes the context
+  Load this skill at Step 3 of the Architecture Design Agent (v3.2.2). Takes the context
   object from the BRD Parser and produces a confirmed domain model: entities,
   relationships, bounded contexts, and business logic constraints. Uses
   domain_model_seed.json as starting point — confirms, rejects, or extends
