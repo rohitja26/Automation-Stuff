@@ -11,7 +11,7 @@ description: >
 # BRD Parser Skill
 
 ## Purpose
-Convert BRD agent output files into a clean, structured context object that the architecture agent uses throughout all 4 steps. This is the ONLY place where /analysis/ files are read — subsequent steps work from the context object, not from files directly.
+Convert BRD agent output files into a clean, structured context object that the architecture agent uses throughout all 10 steps. This is the ONLY place where /analysis/ files are read — subsequent steps work from the context object, not from files directly.
 
 ---
 
@@ -109,6 +109,57 @@ context.p1_decision_points = p1_important questions
   Architecture agent must address every P1 question in the decision log.
 ```
 
+### 2h. From user_journeys.json
+```
+context.user_journeys = journeys[]
+  Each journey: id, name, steps[], ui_components[], services_implied[]
+  Used in Step 4 (FDD) to build functional flows from user journeys.
+```
+
+### 2i. From api_surface_hints.json
+```
+context.api_hints = endpoints[]
+  Each hint: resource, http_method, input_entities, output_entities, 
+  auth_required, auth_level, source_requirements[], confidence
+  Used in Step 6 (LLD) as starting point for API contract generation.
+```
+
+### 2j. From data_flow_map.json
+```
+context.data_flows = flows[]
+  Each flow: from, to, data, pattern (event_driven|request_response|saga|batch|real_time)
+  service_dependencies[], failure_points[]
+  Used in Step 5 (HLD) for architecture patterns and Step 7 (SDD) for sequence diagrams.
+```
+
+### 2k. From feature_groups.json
+```
+context.feature_groups = groups[]
+  Each group: id, name, requirements[], primary_actors[]
+  Used in Step 4 (FDD) as the structural basis for feature decomposition.
+```
+
+### 2l. From technology_consultation.json
+```
+context.tech_consultation_answers = answered questions from BrdAnalyzer Phase 9
+  These are pre-existing technology preference answers — do NOT re-ask.
+  Used in Step 2 (Technology Consultation) to avoid re-asking answered questions.
+```
+
+### 2m. From technology_constraints_binding.json
+```
+context.binding_constraints = constraints[] where binding = true
+  These are FACTS decided by the user — not suggestions.
+  Used in Step 2 to pre-populate technology_stack.json.
+```
+
+### 2n. From maturity-score.json (Stage 2 output)
+```
+context.maturity_score = overall_score, verdict
+  HARD STOP if verdict != "PASS"
+  Quality gate confirmation before architecture generation.
+```
+
 ---
 
 ## Step 3: Ambiguity Detection
@@ -149,18 +200,23 @@ After successful context load and zero ambiguities, produce a brief confirmation
 ```
 BRD Parser complete.
 Context loaded:
+  Maturity score: N/100 (PASS)
   MVP requirements: N
   Phase 2 requirements: N (index only)
   Candidate entities: N
   Business rules: N
+  User journeys: N
+  API surface hints: N endpoints
+  Data flow patterns: N flows
+  Feature groups: N
   Technology constraints: N (binding)
-  Explicit constraints: N (binding)
+  Tech consultation answers: N (pre-answered)
   P1 decision points: N (must address in HLD)
   Compliance: [list]
   Integrations: [list]
   Naming authority terms: N
 
-Proceeding to Step 2: Domain Modeling.
+Proceeding to Step 2: Technology Consultation.
 ```
 
 ---

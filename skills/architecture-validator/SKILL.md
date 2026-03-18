@@ -1,11 +1,12 @@
 ---
 name: architecture-validator
 description: >
-  The only skill loaded by the Architecture Validator Agent. Runs 5 validation
+  The only skill loaded by the Architecture Validator Agent. Runs 8 validation
   checks against all architecture artifacts: flow completeness, API consistency,
   schema completeness, assumption detection (hedge-word scan + citation check),
-  and traceability completeness. Produces validation_report.json. Can trigger
-  a fix cycle for auto-correctable issues.
+  traceability completeness, technology consistency, TDD coverage, and SDD-flow
+  alignment. Produces validation_report.json. Can trigger a fix cycle for
+  auto-correctable issues.
 ---
 
 # Architecture Validator Skill
@@ -133,6 +134,82 @@ For each compliance requirement in `architecture_handoff.json → compliance_req
 
 ---
 
+## Check 6: Technology Consistency
+
+### What to verify
+Load `technology_stack.json` and verify every component in the architecture uses only technologies from the confirmed stack.
+
+### 6a. Component-to-stack mapping
+For each component in `hld.json → components`:
+- Verify the component's technology references (language, framework, database, infrastructure) match entries in `technology_stack.json`
+- If a component uses a technology not in the stack: `TECH_NOT_IN_STACK`
+
+### 6b. Constraint compliance
+For each technology decision in `technology_stack.json`:
+- If `source = "binding_constraint"` or `source = "must_use"`: verify at least one component uses it: `BINDING_TECH_UNUSED`
+- If `cannot_use` list exists: verify no component references a banned technology: `BANNED_TECH_USED`
+
+### 6c. Undecided items
+- Flag any entry where `status = "UNDECIDED"` or value is blank: `TECH_UNDECIDED`
+
+**Finding types**: `TECH_NOT_IN_STACK` | `BINDING_TECH_UNUSED` | `BANNED_TECH_USED` | `TECH_UNDECIDED`
+
+---
+
+## Check 7: TDD Coverage
+
+### What to verify
+Load `tdd.json` (Test Design Document) and verify completeness against requirements and architecture.
+
+### 7a. Requirement → Test mapping
+For every MVP functional requirement in `architecture_handoff.json`:
+- Verify at least one test suite in `tdd.json` covers this requirement ID: `REQUIREMENT_NO_TEST`
+
+### 7b. Business rule → Unit test mapping
+For each rule in `business_rules.json`:
+- Verify a corresponding unit test exists in `tdd.json → suites[type=unit]`: `RULE_NO_UNIT_TEST`
+
+### 7c. API endpoint → API test mapping
+For each endpoint in `lld.json → api_contracts`:
+- Verify a corresponding test exists in `tdd.json → suites[type=api]`: `ENDPOINT_NO_API_TEST`
+
+### 7d. Flow → Integration test mapping
+For each flow in `fdd.json → flows`:
+- Verify at least one integration test references this flow: `FLOW_NO_INTEGRATION_TEST`
+
+### 7e. NFR → Performance test mapping
+For each NFR in `architecture_handoff.json → nfr_targets`:
+- Verify a performance or load test targets this NFR: `NFR_NO_PERF_TEST`
+
+**Finding types**: `REQUIREMENT_NO_TEST` | `RULE_NO_UNIT_TEST` | `ENDPOINT_NO_API_TEST` | `FLOW_NO_INTEGRATION_TEST` | `NFR_NO_PERF_TEST`
+
+---
+
+## Check 8: SDD-Flow Alignment
+
+### What to verify
+Load `sdd.json` (System Design Document) and cross-reference against FDD and HLD.
+
+### 8a. Flow → Sequence diagram mapping
+For every flow in `data_flow_map.json → flows`:
+- Verify a corresponding sequence diagram exists in `sdd.json → sequence_diagrams[]`: `FLOW_NO_SEQUENCE_DIAGRAM`
+
+### 8b. Participants match HLD components
+For each sequence diagram in `sdd.json`:
+- Verify every `participant` matches a component in `hld.json → components`: `SDD_UNKNOWN_PARTICIPANT`
+
+### 8c. API calls match OpenAPI paths
+For each API call step in sequence diagrams:
+- Verify the called endpoint exists in `api_contracts/` OpenAPI files: `SDD_INVALID_API_CALL`
+
+### 8d. Inter-service communication consistency
+For each `inter_service_communication` entry in `sdd.json`:
+- Verify the pattern (sync/async/event) is consistent with the HLD component's declared communication pattern: `SDD_PATTERN_MISMATCH`
+
+**Finding types**: `FLOW_NO_SEQUENCE_DIAGRAM` | `SDD_UNKNOWN_PARTICIPANT` | `SDD_INVALID_API_CALL` | `SDD_PATTERN_MISMATCH`
+
+---
+
 ## Validation Report Schema
 
 ```json
@@ -150,10 +227,18 @@ For each compliance requirement in `architecture_handoff.json → compliance_req
     "auto_fixable": 0,
     "manual_required": 0
   },
+  "coverage_metrics": {
+    "req_to_flow_coverage": "N/M (percentage)",
+    "req_to_test_coverage": "N/M (percentage)",
+    "api_hints_to_endpoints": "N/M (percentage)",
+    "flows_to_sequence_diagrams": "N/M (percentage)",
+    "rules_to_unit_tests": "N/M (percentage)",
+    "entities_to_tables": "N/M (percentage)"
+  },
   "findings": [
     {
       "finding_id": "VF-001",
-      "check": "Check 1 | Check 2 | Check 3 | Check 4 | Check 5",
+      "check": "Check 1 | Check 2 | Check 3 | Check 4 | Check 5 | Check 6 | Check 7 | Check 8",
       "type": "FLOW_MISSING | ORPHAN_ENDPOINT | SCHEMA_API_MISMATCH | DECISION_NO_CITATION | REQUIREMENT_NOT_IMPLEMENTED | ...",
       "severity": "critical | high | medium | low",
       "artifact_file": "fdd.json",
@@ -169,9 +254,13 @@ For each compliance requirement in `architecture_handoff.json → compliance_req
     "api_consistency": false,
     "schema_completeness": true,
     "assumption_detection": true,
-    "traceability_completeness": false
+    "traceability_completeness": false,
+    "technology_consistency": true,
+    "tdd_coverage": true,
+    "sdd_flow_alignment": true
   },
   "undecided_items": ["list of any UNDECIDED markers found in artifacts — these block development even if validation passes"],
+  "pending_clarifications": ["items from pending_clarifications.json still unresolved"],
   "manual_review_required": ["items flagged VERIFY_MANUALLY"]
 }
 ```
@@ -189,10 +278,23 @@ For each compliance requirement in `architecture_handoff.json → compliance_req
 | `ORPHAN_ENDPOINT` | High | API with no business justification |
 | `SCHEMA_API_MISMATCH` | High | API promises data that DB cannot provide |
 | `COMPLIANCE_NOT_ADDRESSED` | High | Regulation with no design coverage |
+| `BANNED_TECH_USED` | High | Component uses a technology on cannot_use list |
+| `REQUIREMENT_NO_TEST` | High | Must-have requirement with no test coverage |
+| `FLOW_NO_SEQUENCE_DIAGRAM` | High | Data flow has no SDD sequence diagram |
+| `TECH_NOT_IN_STACK` | Medium | Component uses tech not in technology_stack.json |
+| `TECH_UNDECIDED` | Medium | Technology decision still pending |
 | `NAMING_INCONSISTENCY` | Medium | Wrong term in artifact — maintainability issue |
 | `FLOW_NO_EDGE_CASES` | Medium | Flow covers only happy path |
 | `DECISION_BROKEN_CITATION` | Medium | Decision references non-existent requirement |
+| `RULE_NO_UNIT_TEST` | Medium | Business rule with no unit test |
+| `ENDPOINT_NO_API_TEST` | Medium | API endpoint with no API test |
+| `SDD_UNKNOWN_PARTICIPANT` | Medium | SDD participant not in HLD components |
+| `SDD_INVALID_API_CALL` | Medium | SDD references API not in OpenAPI specs |
+| `SDD_PATTERN_MISMATCH` | Medium | Communication pattern mismatch between SDD and HLD |
+| `FLOW_NO_INTEGRATION_TEST` | Low | Flow with no integration test |
+| `NFR_NO_PERF_TEST` | Low | NFR with no performance test |
 | `INDEX_NO_CITATION` | Low | Index without business justification |
+| `BINDING_TECH_UNUSED` | Low | Binding tech specified but not used by any component |
 | `VERIFY_MANUALLY` | Low | Cannot be auto-verified |
 
 ---
@@ -203,8 +305,22 @@ The Validator can auto-fix these finding types without human intervention:
 - `NAMING_INCONSISTENCY`: Replace incorrect term with glossary-authoritative term in artifact JSON
 - `DECISION_BROKEN_CITATION`: Remove the broken requirement ID from `justified_by[]` and add finding note
 - `INDEX_NO_CITATION`: Add `"justified_by": "NEEDS_CITATION"` placeholder
+- `COUNT_MISMATCH`: Fix summary count fields to match array lengths
 
 All other findings require the Architecture Design Agent to re-run the relevant step or human architect review.
+
+**Step re-trigger mapping** (when FAILED, re-run only the step that produced the failing artifact):
+
+| Finding source | Re-trigger step |
+|---|---|
+| Check 1 (Flow issues) | Step 4 (FDD) |
+| Check 2 (API issues) | Step 6 (LLD) |
+| Check 3 (Schema issues) | Step 6 (LLD) |
+| Check 4 (Assumption issues) | Step that produced the flagged artifact |
+| Check 5 (Traceability issues) | Step 9 (Decision Log + Traceability) |
+| Check 6 (Tech consistency) | Step 2 (Technology Consultation) |
+| Check 7 (TDD coverage) | Step 8 (TDD) |
+| Check 8 (SDD alignment) | Step 7 (SDD) |
 
 ---
 

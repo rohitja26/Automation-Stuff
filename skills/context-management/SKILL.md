@@ -137,7 +137,12 @@ Write `/analysis/.context-checkpoint.json` after every section is processed. Thi
     "phase_10": "pending",
     "phase_11": "pending",
     "phase_12": "pending",
-    "phase_13": "pending"
+    "phase_13": "pending",
+    "phase_14": "pending",
+    "phase_15": "pending",
+    "phase_16": "pending",
+    "phase_17": "pending",
+    "phase_18": "pending"
   },
 
   "accumulated_state": {
@@ -165,7 +170,17 @@ Write `/analysis/.context-checkpoint.json` after every section is processed. Thi
     "assumptions_and_risks.json": "in_progress",
     "traceability_matrix.json": "pending",
     "glossary.json": "pending",
-    "analysis_summary.json": "pending"
+    "analysis_summary.json": "pending",
+    "domain_model_seed.json": "pending",
+    "business_rules.json": "pending",
+    "architecture_handoff.json": "pending",
+    "user_journeys.json": "pending",
+    "api_surface_hints.json": "pending",
+    "data_flow_map.json": "pending",
+    "feature_groups.json": "pending",
+    "technology_consultation.json": "pending",
+    "technology_constraints_binding.json": "pending",
+    "pending_clarifications.json": "pending"
   }
 }
 ```
@@ -275,7 +290,7 @@ When a phase completes and the next phase begins:
 5. Phase 7 (gap analysis) reads section outlines + output file metadata, not BRD text
 6. Phase 11 (traceability) reads from all output files — loads metadata only, not full requirement bodies
 
-This means Phases 5, 7, 8, 9, 10, 11 operate on **output files**, not on BRD source content. The BRD is fully consumed and written to disk by the end of Phase 3.
+This means Phases 5, 7, 8, 9, 10, 11, 14, 15, 16, 17 operate on **output files**, not on BRD source content. The BRD is fully consumed and written to disk by the end of Phase 4.
 
 ---
 

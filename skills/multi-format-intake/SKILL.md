@@ -11,7 +11,7 @@ description: >
 # Multi-Format Intake Skill
 
 ## Purpose
-Define extraction protocols for every non-markdown input format. The agent follows whichever protocol matches the detected file type. All extracted content must be source-tagged before entering the unified content buffer.
+Define extraction protocols for every non-markdown input format. The agent follows whichever protocol matches the detected file type. All extracted content must be source-tagged and written to disk immediately after extraction — never accumulated in a buffer.
 
 ---
 
@@ -108,7 +108,7 @@ For images that contain text (screenshots of requirements documents, photos of w
 
 ## Universal Source Tagging Rule
 
-Every piece of extracted content must carry this tag before entering the unified content buffer:
+Every piece of extracted content must carry this tag before being written to disk:
 ```json
 {
   "text": "extracted content",
@@ -126,7 +126,7 @@ Low-confidence extractions (garbled OCR, partially visible text) generate a P1 q
 
 ## Content Normalization Rules (apply to all formats)
 
-After extraction, normalize before inserting into unified content buffer:
+After extraction, normalize before writing to disk:
 1. Remove duplicate whitespace and normalize line breaks
 2. Standardize heading levels (if PDF uses all-caps for headings, detect and convert)
 3. Expand common abbreviations: "NFR" → "Non-Functional Requirement", "FR" → "Functional Requirement", "AC" → "Acceptance Criteria"
@@ -142,4 +142,4 @@ After extraction, normalize before inserting into unified content buffer:
 - [ ] All tables have been converted to markdown format
 - [ ] Tracked changes/comments from Word documents captured
 - [ ] Low-confidence extractions flagged with P1 questions
-- [ ] Unified content buffer assembled with no untagged content
+- [ ] All extracted content written to disk with source tags — no in-memory accumulation

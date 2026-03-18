@@ -309,17 +309,320 @@ Written after Phase 12. This is the primary handoff document for Stage 2.
 
 ---
 
+## File 8: domain_model_seed.json
+
+Written after Phase 14 (Domain Seed Generation).
+
+```json
+{
+  "seed_version": "3.2",
+  "run_id": "uuid-v4",
+  "generated_at": "ISO-8601",
+  "entities": [
+    {
+      "name": "EntityName",
+      "description": "One sentence from requirements",
+      "source_requirements": ["REQ-F-XXX"],
+      "candidate_fields": [
+        {"name": "field_name", "type": "string|integer|boolean|datetime|enum|reference", "derived_from": "REQ-F-XXX"}
+      ],
+      "lifecycle_states": ["state1", "state2"],
+      "invariants": ["Business invariant from BR-XXX"],
+      "access_control_level": "public | authenticated | role-based | owner-only"
+    }
+  ],
+  "relationships": [
+    {"from": "Entity1", "to": "Entity2", "type": "one-to-many", "derived_from": "REQ-F-XXX"}
+  ],
+  "entity_count": 0,
+  "relationship_count": 0
+}
+```
+
+---
+
+## File 9: business_rules.json
+
+Written after Phase 15 (Business Rules Extraction).
+
+```json
+{
+  "rules_version": "3.2",
+  "run_id": "uuid-v4",
+  "generated_at": "ISO-8601",
+  "total_rules": 0,
+  "rules": [
+    {
+      "id": "BR-001",
+      "rule_type": "validation | calculation | state-transition | constraint | authorization",
+      "description": "Rule statement derived from requirements",
+      "source_requirements": ["REQ-F-XXX"],
+      "entities_involved": ["EntityName"],
+      "trigger_condition": "When this condition is true",
+      "expected_behavior": "The system shall...",
+      "exception_handling": "If condition fails, then...",
+      "testable": true
+    }
+  ]
+}
+```
+
+---
+
+## File 10: architecture_handoff.json
+
+Written after Phase 16 (Architecture Handoff Assembly).
+
+```json
+{
+  "handoff_version": "3.2",
+  "run_id": "uuid-v4",
+  "generated_at": "ISO-8601",
+  "readiness_gate": {
+    "ready_for_architecture": true,
+    "blocking_items": [],
+    "conditional_items": []
+  },
+  "mvp_requirements": ["REQ-F-001"],
+  "phase2_requirements": ["REQ-F-050"],
+  "nfr_targets": [
+    {"nfr_id": "REQ-NF-XXX", "metric": "string", "target_value": "numeric", "measurement_method": "string"}
+  ],
+  "technology_constraints": {
+    "constraints": [
+      {"category": "string", "value": "string", "binding": true, "source": "string"}
+    ]
+  },
+  "external_integrations": [
+    {"name": "string", "type": "string", "direction": "inbound|outbound|bidirectional"}
+  ],
+  "compliance_requirements": ["GDPR"],
+  "scalability_patterns": ["horizontal-scaling"],
+  "explicit_constraints": []
+}
+```
+
+---
+
+## File 11: user_journeys.json
+
+Written after Phase 15 (User Journey Extraction).
+
+```json
+{
+  "journeys_version": "3.2",
+  "run_id": "uuid-v4",
+  "generated_at": "ISO-8601",
+  "total_journeys": 0,
+  "journeys": [
+    {
+      "id": "UJ-001",
+      "name": "Journey name",
+      "actor": "Customer | Vendor | Admin",
+      "goal": "What the actor wants to achieve",
+      "preconditions": ["string"],
+      "steps": [
+        {"step": 1, "action": "string", "system_response": "string", "requirement_id": "REQ-F-XXX"}
+      ],
+      "postconditions": ["string"],
+      "requirement_ids": ["REQ-F-XXX"],
+      "ui_components": ["screen or component names implied"],
+      "services_implied": ["service names implied by the journey"]
+    }
+  ]
+}
+```
+
+---
+
+## File 12: api_surface_hints.json
+
+Written after Phase 15 (API Surface Detection).
+
+```json
+{
+  "hints_version": "3.2",
+  "run_id": "uuid-v4",
+  "generated_at": "ISO-8601",
+  "total_hints": 0,
+  "endpoints": [
+    {
+      "resource": "/entity-name",
+      "http_method": "GET | POST | PUT | PATCH | DELETE",
+      "operation_summary": "string",
+      "input_entities": ["EntityName"],
+      "output_entities": ["EntityName"],
+      "auth_required": true,
+      "auth_level": "public | authenticated | role-based | admin",
+      "source_requirements": ["REQ-F-XXX"],
+      "confidence": "high | medium | low"
+    }
+  ]
+}
+```
+
+---
+
+## File 13: data_flow_map.json
+
+Written after Phase 16 (Data Flow Analysis).
+
+```json
+{
+  "flow_version": "3.2",
+  "run_id": "uuid-v4",
+  "generated_at": "ISO-8601",
+  "total_flows": 0,
+  "flows": [
+    {
+      "id": "DF-001",
+      "from": "source entity or service",
+      "to": "target entity or service",
+      "data": "what data moves",
+      "pattern": "event_driven | request_response | saga | batch | real_time",
+      "trigger": "what initiates this flow",
+      "source_requirements": ["REQ-F-XXX"],
+      "service_dependencies": ["ServiceName"],
+      "failure_points": ["what can go wrong"]
+    }
+  ]
+}
+```
+
+---
+
+## File 14: feature_groups.json
+
+Written after Phase 14 (Feature Grouping).
+
+```json
+{
+  "groups_version": "3.2",
+  "run_id": "uuid-v4",
+  "generated_at": "ISO-8601",
+  "total_groups": 0,
+  "groups": [
+    {
+      "id": "FG-001",
+      "name": "Feature Group Name",
+      "description": "One sentence",
+      "requirements": ["REQ-F-XXX"],
+      "primary_actors": ["Customer"],
+      "bounded_context_hint": "Suggested bounded context"
+    }
+  ]
+}
+```
+
+---
+
+## File 15: technology_consultation.json
+
+Written after Phase 9 (Technology Consultation).
+
+```json
+{
+  "consultation_version": "3.2",
+  "run_id": "uuid-v4",
+  "generated_at": "ISO-8601",
+  "questions_asked": 0,
+  "questions_answered": 0,
+  "questions": [
+    {
+      "id": "TC-001",
+      "category": "backend | frontend | database | infrastructure | search | messaging | auth",
+      "question": "Full question text",
+      "answer": "User's answer or null if unanswered",
+      "answered_at": "ISO-8601 or null",
+      "implications": "What this answer means for architecture"
+    }
+  ]
+}
+```
+
+---
+
+## File 16: technology_constraints_binding.json
+
+Written after Phase 9 (from explicit constraints and consultation answers).
+
+```json
+{
+  "constraints_version": "3.2",
+  "run_id": "uuid-v4",
+  "generated_at": "ISO-8601",
+  "total_constraints": 0,
+  "constraints": [
+    {
+      "category": "backend_language | frontend_framework | database | cloud_provider | search_engine | cache | messaging | auth_provider",
+      "value": "Technology name",
+      "binding": true,
+      "source": "explicit-brd | user-answer-TC-XXX | technology-constraint",
+      "cannot_use": ["list of banned alternatives"]
+    }
+  ]
+}
+```
+
+---
+
+## File 17: pending_clarifications.json
+
+Written after Phase 18 (Final Assembly). Tracks unresolved items.
+
+```json
+{
+  "pending_version": "3.2",
+  "run_id": "uuid-v4",
+  "generated_at": "ISO-8601",
+  "total_pending": 0,
+  "clarifications": [
+    {
+      "id": "PC-001",
+      "source_question_id": "Q-P1-XXX",
+      "question": "Unresolved question text",
+      "impact_level": "high | medium | low",
+      "blocking_stage": "architecture | development",
+      "related_requirements": ["REQ-F-XXX"]
+    }
+  ]
+}
+```
+
+---
+
 ## greenfield_guidance.json (conditional)
 
 Only written if `greenfield_detected = true`. Schema defined in `greenfield-intelligence` skill.
 
 ---
 
-## Validation Rules (Phase 13)
+## Additional Fields for requirements_catalog.json
+
+BrdAnalyzer-3.2 adds these fields to each requirement entry (in addition to the base schema above):
+
+```json
+{
+  "data_entities_involved": ["EntityName"],
+  "implied_api_operations": ["GET /resource", "POST /resource"],
+  "ui_screens_referenced": ["screen name from UI mockups"],
+  "feature_group": "FG-001",
+  "test_strategy_hint": "unit | integration | e2e | performance",
+  "nfr_quantified_target": {"metric": "response_time", "value": 200, "unit": "ms"},
+  "clarification_needed": false,
+  "clarification_reason": "null or reason string"
+}
+```
+
+These are optional per-requirement fields — they may be null if no signal was detected.
+
+---
+
+## Validation Rules (Phase 18)
 
 Before marking output as complete:
 
-1. Parse all JSON files — zero syntax errors allowed
+1. Parse all 17 JSON files — zero syntax errors allowed
 2. `requirements_catalog.json`: `total_requirements` field == `requirements[]` array length
 3. `clarification_questions.json`: `summary.total` == `questions[]` array length
 4. `traceability_matrix.json`: every `req_id` exists in `requirements_catalog.json`
@@ -327,5 +630,10 @@ Before marking output as complete:
 6. No requirement has `source_verbatim` as null, undefined, or empty string
 7. No requirement has `priority` as null
 8. `analysis_summary.json` `handoff_package.total_requirements` matches `requirements_catalog.json` total
+9. `architecture_handoff.json` → `mvp_requirements` is a subset of IDs in `requirements_catalog.json`
+10. `domain_model_seed.json` → every entity has at least one `source_requirements` entry
+11. `business_rules.json` → every rule has at least one `source_requirements` entry
+12. `feature_groups.json` → every group has at least one requirement from `requirements_catalog.json`
 
 **Repair procedure**: If any validation fails, use `vscode/str_replace` to fix the specific field. Log the repair in `analysis_summary.json` under `"repair_log"` array.
+

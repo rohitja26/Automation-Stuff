@@ -1,11 +1,11 @@
 ---
 name: output-architect
 description: >
-  Load this skill at the end of Architecture Design Agent Step 4. Produces the
-  Flow Design Document (FDD), the Service Design Document (SDD), and the master
-  Technical Design Document (TDD) that combines HLD + LLD. Also updates the
-  traceability_matrix.json forward links. Ensures dual output: machine-readable
-  JSON + human-readable Markdown for every artifact.
+  Load this skill at Step 9 of the Architecture Design Agent (v3.2.2). Handles
+  decision log assembly, traceability back-write, and the Master Technical
+  Document (MTD) that combines HLD + LLD overview. NOTE: The FDD, SDD, and
+  Test Design Document (TDD) are now generated in separate steps (4, 7, 8)
+  by the architecture agent directly — this skill no longer generates them.
 ---
 
 # Output Architect Skill
@@ -120,29 +120,28 @@ One section per HLD component:
 
 ---
 
-## Artifact 3: Technical Design Document (TDD — Master)
+## Artifact 3: Master Technical Document (MTD)
 
-The TDD combines HLD + LLD into a single master document. It does not add new content — it assembles the two.
+The MTD combines HLD + LLD into a single master overview document. It does not add new content — it assembles the two. **NOTE**: This is NOT the Test Design Document (TDD), which is generated separately in Step 8 by the architecture agent.
 
-**TDD.md structure**:
+**MTD.md structure**:
 ```markdown
-# Technical Design Document — {Project Name}
+# Master Technical Document — {Project Name}
 **Version**: 1.0 | **Stage**: Architecture Draft | **Date**: {date}
 
 ## 1. Purpose and scope
 {2 sentences from project_overview in analysis_summary.json}
 
 ## 2. Technology stack
-{From technology_constraints — ONLY what is explicitly specified}
-| Decision | Value | Justified by |
-|---|---|---|
-| Backend language | Node.js | Explicit constraint Q-P1-001 |
-| Cloud provider | AWS ap-south-1 | Explicit constraint Q-P1-001 + NFR-018 |
-| Primary database | PostgreSQL (AWS RDS) | Explicit constraint Q-P1-001 |
+{From technology_stack.json — all confirmed decisions}
+| Decision | Value | Source | Justified by |
+|---|---|---|---|
+| Backend language | Node.js | binding_constraint | Explicit constraint |
+| Cloud provider | AWS ap-south-1 | binding_constraint | NFR-018 |
 ...
 
 If any technology is UNSPECIFIED, show:
-| Search engine | UNSPECIFIED — architecture team must decide | NFR-002 + NFR-012 require decision |
+| Search engine | UNSPECIFIED — architecture team must decide | | NFR-002 + NFR-012 require decision |
 
 ## 3. Architecture overview
 {From HLD.md Architecture Overview section}
@@ -162,22 +161,25 @@ If any technology is UNSPECIFIED, show:
 ## 8. Flow summary
 {Table: flow_id | name | requirement_ids | actors}
 
-## 9. Non-functional requirement coverage
+## 9. Test strategy summary
+{From TDD.md: Table: suite | type | test_count | coverage}
+
+## 10. Non-functional requirement coverage
 {Table: NFR ID | target | addressed by | design decision}
 
-## 10. Security design
+## 11. Security design
 {From HLD security architecture section}
 
-## 11. Compliance coverage
+## 12. Compliance coverage
 {From compliance_radar — regulations and which components address each}
 
-## 12. Decision log
-{From HLD decision_log — full table}
+## 13. Decision log
+{From decision_log.json — full table}
 
-## 13. Open decisions (UNDECIDED items)
-{Any item marked UNDECIDED in HLD/LLD — these must be resolved before development}
+## 14. Open decisions (UNDECIDED items)
+{Any item marked UNDECIDED — these must be resolved before development}
 
-## 14. Future scope
+## 15. Future scope
 {Phase 2 requirements — acknowledged, not designed}
 ```
 
@@ -211,17 +213,15 @@ Before triggering the Validator Agent, verify all of these files exist:
 
 ```
 /architecture/
-  fdd.json                     ← Flow Design Document (machine-readable)
-  FDD.md                       ← Flow Design Document (human-readable)
-  hld.json                     ← High-Level Design (machine-readable)
-  HLD.md                       ← High-Level Design (human-readable)
-  lld.json                     ← Low-Level Design (machine-readable)
-  LLD.md                       ← Low-Level Design (human-readable)
-  domain_model.json            ← Confirmed entity model
-  sdd.json                     ← Service Design Document
-  SDD.md
-  decision_log.json            ← All HLD decisions extracted
-  TDD.md                       ← Master document (assembled from above)
+  technology_stack.json        ← Technology decisions (Step 2)
+  domain_model.json            ← Confirmed entity model (Step 3)
+  fdd.json + FDD.md            ← Flow Design Document (Step 4)
+  hld.json + HLD.md            ← High-Level Design (Step 5)
+  lld.json + LLD.md            ← Low-Level Design (Step 6)
+  sdd.json + SDD.md            ← System Design Document (Step 7)
+  tdd.json + TDD.md            ← Test Design Document (Step 8)
+  decision_log.json            ← All decisions (Step 9)
+  MTD.md                       ← Master Technical Document (assembled overview)
   api_contracts/
     {service}.openapi.yaml     ← One per service
   db_schemas/
