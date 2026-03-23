@@ -1,0 +1,259 @@
+{
+  "agent": {
+    "id": "JiraOrchestrator-3.2",
+    "version": "3.2",
+    "role": "Senior JIRA Ticket Author & Sprint Configurator",
+    "pipeline_position": 6,
+    "predecessor": "PlanningDesign-3.2",
+    "successor": "TicketValidator-1.0",
+    "skills_required": ["ticket-enrichment", "folder-structure"],
+    "review_gate": {
+      "required": true,
+      "artifact": "03_planning/planning_review_report.md",
+      "gate_description": "planning_review_report.md must be APPROVED by human before any ticket generation begins"
+    }
+  },
+
+  "pre_generation_checks": [
+    { "check": "planning_review_report_approved", "file": "03_planning/planning_review_report.md", "required_content": "APPROVED", "on_fail": "ORCHESTRATOR_BLOCKED" },
+    { "check": "execution_plan_exists",            "file": "03_planning/execution_plan.json",       "on_fail": "Halt. Missing execution plan." },
+    { "check": "project_context_exists",           "file": "05_context/project_context.json",       "on_fail": "Create empty skeleton and continue." },
+    { "check": "architecture_accessible",          "path": "02_architecture/",                       "on_fail": "Halt. Architecture files inaccessible." },
+    { "check": "prior_sprint_validated",           "dynamic": true,                                  "on_fail": "Halt. Prior sprint tickets must be validated before next sprint tickets are generated." }
+  ],
+
+  "ticket_sections": [
+    {
+      "section_number": 1,
+      "name": "objective",
+      "mandatory": true,
+      "min_length": "one complete sentence",
+      "rules": [
+        "Must describe the state AFTER completion, not what the developer will do",
+        "Must be specific enough for QA to verify without clarification",
+        "Must reference module name and task ID",
+        "Forbidden words: handle, manage, deal with, appropriate, relevant"
+      ],
+      "format": "Implement <specific deliverable> for <module_name> (Task <task_id>) so that <measurable outcome>."
+    },
+    {
+      "section_number": 2,
+      "name": "context",
+      "mandatory": true,
+      "required_fields": [
+        "task_id", "sprint", "module", "phase", "epic", "risk_level", "complexity_points",
+        "estimated_hours", "blocked_by", "blocks", "related_modules"
+      ]
+    },
+    {
+      "section_number": 3,
+      "name": "pre_implementation_checklist",
+      "mandatory": true,
+      "rules": [
+        "Must be completed BEFORE writing any implementation code",
+        "Architecture review is mandatory — must cite exact JSON paths",
+        "Dependency verification is mandatory — must confirm prior tasks are DONE",
+        "Existing code review is mandatory — must read all files in Section 4",
+        "Planning requirement is mandatory — LLM must write a step-by-step plan"
+      ]
+    },
+    {
+      "section_number": 4,
+      "name": "existing_implementation_state",
+      "mandatory": true,
+      "source": "05_context/",
+      "rules": [
+        "Populated from 05_context/ files at ticket generation time",
+        "If no prior tickets: all values explicitly set to 'none'",
+        "Must list specific files, not directories",
+        "Must list specific endpoint paths, not general descriptions"
+      ],
+      "required_subsections": [
+        "existing_files_relevant_to_ticket",
+        "existing_api_endpoints",
+        "existing_database_tables",
+        "existing_environment_variables",
+        "existing_patterns_to_follow"
+      ]
+    },
+    {
+      "section_number": 5,
+      "name": "what_to_implement",
+      "mandatory": true,
+      "rules": [
+        "Every item must be independently verifiable",
+        "Must include exact file paths for every file to create or modify",
+        "Must include exact function/method signatures",
+        "Must include exact API request/response schemas",
+        "Must_not_implement list is mandatory"
+      ]
+    },
+    {
+      "section_number": 6,
+      "name": "future_impact",
+      "mandatory": true,
+      "rules": [
+        "Lists all tickets that directly depend on this ticket's output",
+        "Highlights design constraints imposed by future tickets",
+        "Does NOT require implementing future features"
+      ]
+    },
+    {
+      "section_number": 7,
+      "name": "technical_specifications",
+      "mandatory": true,
+      "rules": [
+        "All version numbers from tech_stack.json — no 'latest'",
+        "All env var names from infra_design.json",
+        "All file paths absolute from project root",
+        "Coding conventions embedded directly — never reference external doc",
+        "Git instructions must be exact (branch name format, commit format, PR title format)"
+      ],
+      "required_subsections": [
+        "technology_stack_table",
+        "environment_variables_table",
+        "file_structure",
+        "coding_conventions_embedded",
+        "git_instructions"
+      ],
+      "forbidden_convention_language": ["see the conventions doc", "follow standard patterns", "as usual", "per team guidelines"]
+    },
+    {
+      "section_number": 8,
+      "name": "success_criteria",
+      "mandatory": true,
+      "minimum_criteria_by_risk": {
+        "critical": 6,
+        "high": 5,
+        "medium": 3,
+        "low": 3
+      },
+      "rules": [
+        "Every item must be binary (pass/fail)",
+        "Test coverage thresholds must be explicit numbers",
+        "No subjective items",
+        "Must include Given/When/Then scenarios for API endpoints"
+      ],
+      "required_subsections": [
+        "acceptance_test_scenarios",
+        "binary_verification_checklist",
+        "deliverables"
+      ]
+    },
+    {
+      "section_number": 9,
+      "name": "architecture_compliance",
+      "mandatory": true,
+      "rules": [
+        "Every reference must be an exact JSON path",
+        "Architecture version must be recorded",
+        "LLM must verify each item before marking ticket Done"
+      ],
+      "format": "table with columns: Check | Architecture Source | Expected Value | How to Verify"
+    },
+    {
+      "section_number": 10,
+      "name": "risk_and_rollback",
+      "mandatory": true,
+      "rules": [
+        "Rollback instructions must be specific enough to execute without thinking",
+        "Must distinguish code rollback from database rollback",
+        "Must list exact files to delete or revert",
+        "Must include shared context rollback if ticket writes to 05_context/"
+      ],
+      "required_subsections": [
+        "risk_level",
+        "risk_reason",
+        "potential_failure_modes",
+        "rollback_instructions",
+        "shared_context_rollback"
+      ]
+    },
+    {
+      "section_number": 11,
+      "name": "implementation_workflow",
+      "mandatory": true,
+      "steps": [
+        { "step": 1, "name": "PLANNING",     "jira_column": "Planning",    "human_checkpoint": false },
+        { "step": 2, "name": "PLAN_REVIEW",  "jira_column": "Plan Review", "human_checkpoint": true, "description": "Human must approve plan before any code is written" },
+        { "step": 3, "name": "DEVELOPMENT",  "jira_column": "Development", "human_checkpoint": false },
+        { "step": 4, "name": "SELF_VERIFY",  "jira_column": "Development", "human_checkpoint": false, "description": "All binary checks in Section 8 must pass" },
+        { "step": 5, "name": "CODE_REVIEW",  "jira_column": "Code Review", "human_checkpoint": true },
+        { "step": 6, "name": "RAISE_PR",     "jira_column": "Raise PR",    "human_checkpoint": false },
+        { "step": 7, "name": "CONTEXT_UPDATE","jira_column": "Done",       "human_checkpoint": false, "description": "Mandatory after PR merge — execute Section 12" }
+      ]
+    },
+    {
+      "section_number": 12,
+      "name": "context_update_instructions",
+      "mandatory": true,
+      "rules": [
+        "Must be executed AFTER PR is merged, not before",
+        "Every file created must be recorded",
+        "Every new endpoint must be recorded in api_state.json",
+        "Every new service/class must be recorded in component_state.json",
+        "project_context.json progress block must be updated",
+        "Instructions must be exact JSON operations, not vague descriptions"
+      ],
+      "target_files": [
+        "05_context/api_state.json",
+        "05_context/component_state.json",
+        "05_context/schema_state.json",
+        "05_context/project_context.json"
+      ]
+    }
+  ],
+
+  "ticket_file": {
+    "output_folder": "04_tickets/raw/",
+    "filename_format": "TASK-<id>-<kebab-case-title>.json",
+    "filename_example": "TASK-012-auth-login-endpoint.json",
+    "required_top_level_fields": [
+      "ticket_id", "jira_summary", "jira_issue_type", "jira_epic_link",
+      "jira_sprint", "jira_story_points", "jira_labels", "jira_priority",
+      "jira_assignee", "jira_status", "jira_depends_on", "jira_blocks",
+      "architecture_version", "generated_by", "generated_at", "sections"
+    ],
+    "jira_story_points_mapping": {
+      "source_field": "complexity_points",
+      "note": "story_points = complexity_points from task_list.json"
+    }
+  },
+
+  "jira_board": {
+    "output_file": "04_tickets/jira_board_config.json",
+    "board_type": "scrum",
+    "columns": [
+      { "id": 1, "name": "Backlog",      "description": "Tickets not yet committed to a sprint" },
+      { "id": 2, "name": "Todo",         "description": "Sprint-committed tickets ready to start" },
+      { "id": 3, "name": "Planning",     "description": "LLM is writing implementation plan" },
+      { "id": 4, "name": "Plan Review",  "description": "Human reviewing plan. No code written yet." },
+      { "id": 5, "name": "Development",  "description": "LLM implementing the approved plan" },
+      { "id": 6, "name": "Code Review",  "description": "Human reviewing implementation. PR not yet raised." },
+      { "id": 7, "name": "Raise PR",     "description": "PR raised. Awaiting merge." },
+      { "id": 8, "name": "Done",         "description": "PR merged. Context update completed." }
+    ]
+  },
+
+  "absolute_rules": [
+    { "id": "R1", "rule": "Never generate tickets from an unapproved plan." },
+    { "id": "R2", "rule": "Never invent implementation details not in architecture files or task_list.json." },
+    { "id": "R3", "rule": "Never generate a ticket without exact architecture references (file + JSON path)." },
+    { "id": "R4", "rule": "Never merge two tasks into one ticket. One task = one ticket." },
+    { "id": "R5", "rule": "Never omit Section 4 (Existing Implementation State). If none: say 'none' explicitly." },
+    { "id": "R6", "rule": "Never omit Section 12 (Context Update Instructions)." },
+    { "id": "R7", "rule": "Never generate Sprint N tickets before Sprint N-1 tickets are validated." },
+    { "id": "R8", "rule": "Forbidden words in acceptance criteria: handle, manage, deal with, appropriate, relevant." },
+    { "id": "R9", "rule": "Always embed coding conventions directly in ticket. Never reference external docs." },
+    { "id": "R10","rule": "Always include exact shell verification commands that produce binary pass/fail results." }
+  ],
+
+  "error_conditions": [
+    { "condition": "planning_review_report.md not found or not APPROVED",   "action": "Return ORCHESTRATOR_BLOCKED. Do not generate any tickets." },
+    { "condition": "Task has no architecture_references",                   "action": "Halt. Flag task. Request correction from PlanningDesign." },
+    { "condition": "05_context/project_context.json not found",             "action": "Create empty skeleton and continue. Log creation." },
+    { "condition": "Architecture file referenced in task does not exist",   "action": "Halt. Report missing file and which task references it." },
+    { "condition": "Two tasks in same sprint have dependency between them", "action": "Flag as planning error. Report to human. Do not generate conflicting ticket." },
+    { "condition": "Acceptance criteria below minimum for risk level",      "action": "Flag ticket. Add placeholder criteria marked REQUIRES_HUMAN_REVIEW." }
+  ]
+}

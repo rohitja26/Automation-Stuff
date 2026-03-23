@@ -1,0 +1,193 @@
+{
+  "agent": {
+    "id": "TicketValidator-1.0",
+    "version": "1.0",
+    "role": "Senior QA Engineer & Architecture Compliance Reviewer",
+    "pipeline_position": 7,
+    "predecessor": "JiraOrchestrator-3.2",
+    "successor": "JIRA_MCP_PUSH",
+    "skills_required": ["folder-structure"],
+    "on_pass": "Move tickets to 04_tickets/validated/. Proceed to JIRA MCP push.",
+    "on_fail": "Return to JiraOrchestrator-3.2 with specific failure reasons. Do not push."
+  },
+
+  "inputs": {
+    "required": [
+      { "path": "04_tickets/raw/",                 "description": "Raw ticket files from JiraOrchestrator" },
+      { "path": "03_planning/execution_plan.json", "description": "For coverage validation" },
+      { "path": "02_architecture/",                "description": "All 8 architecture files for reference checks" },
+      { "path": "05_context/project_context.json", "description": "Shared context state" }
+    ],
+    "on_missing_input": "Halt and report VALIDATOR_INPUT_ERROR"
+  },
+
+  "validation_categories": [
+    {
+      "category_id": "S",
+      "name": "structural_completeness",
+      "scope": "per_ticket",
+      "checks": [
+        { "id": "S-01", "description": "Ticket file is valid JSON",                                       "severity": "BLOCKER" },
+        { "id": "S-02", "description": "All 12 sections present in sections object",                      "severity": "BLOCKER" },
+        { "id": "S-03", "description": "No section contains placeholder text (..., TODO, TBD, PLACEHOLDER)", "severity": "BLOCKER" },
+        { "id": "S-04", "description": "ticket_id matches filename",                                       "severity": "BLOCKER" },
+        { "id": "S-05", "description": "jira_depends_on matches task_list.json dependencies for this task", "severity": "BLOCKER" },
+        { "id": "S-06", "description": "jira_blocks matches task_list.json dependents for this task",       "severity": "BLOCKER" },
+        { "id": "S-07", "description": "jira_sprint matches sprint in task_list.json for this task",        "severity": "BLOCKER" },
+        { "id": "S-08", "description": "jira_story_points matches complexity_points in task_list.json",     "severity": "WARNING" }
+      ]
+    },
+    {
+      "category_id": "A",
+      "name": "architecture_reference_accuracy",
+      "scope": "per_ticket",
+      "checks": [
+        { "id": "A-01", "description": "Referenced architecture file exists at 02_architecture/<filename>",                                "severity": "BLOCKER" },
+        { "id": "A-02", "description": "Referenced JSON path exists in the architecture file",                                             "severity": "BLOCKER" },
+        { "id": "A-03", "description": "Expected value in ticket matches actual value at the JSON path",                                   "severity": "BLOCKER" },
+        { "id": "A-04", "description": "architecture_version in ticket matches validation_report.json",                                    "severity": "WARNING" },
+        { "id": "A-05", "description": "Technology versions in Section 7 match tech_stack.json",                                          "severity": "BLOCKER" },
+        { "id": "A-06", "description": "Environment variable names in Section 7 match infra_design.json → environment.required_env_vars", "severity": "BLOCKER" },
+        { "id": "A-07", "description": "API endpoint paths in Section 5 match api_contracts.json exactly (path, method)",                 "severity": "BLOCKER" },
+        { "id": "A-08", "description": "Database table names in Sections 4 and 5 match database_schema.json",                            "severity": "BLOCKER" }
+      ]
+    },
+    {
+      "category_id": "Q",
+      "name": "acceptance_criteria_quality",
+      "scope": "per_ticket",
+      "checks": [
+        { "id": "Q-01", "description": "Acceptance criteria count meets minimum for risk level",                                                       "severity": "BLOCKER",
+          "minimums": { "critical": 6, "high": 5, "medium": 3, "low": 3 } },
+        { "id": "Q-02", "description": "No criteria item contains: handle, manage, deal with, appropriate, relevant, properly, correctly, as needed",  "severity": "BLOCKER" },
+        { "id": "Q-03", "description": "Every criteria item is binary (pass/fail answerable)",                                                         "severity": "BLOCKER" },
+        { "id": "Q-04", "description": "At least one Given/When/Then scenario for tickets implementing an API endpoint",                               "severity": "BLOCKER" },
+        { "id": "Q-05", "description": "Test coverage thresholds are explicit percentages",                                                            "severity": "BLOCKER" },
+        { "id": "Q-06", "description": "Binary verification checklist contains at least one runnable shell command",                                   "severity": "BLOCKER" },
+        { "id": "Q-07", "description": "Deliverables list is complete — every file in file_operations.creates is listed",                             "severity": "WARNING" }
+      ]
+    },
+    {
+      "category_id": "D",
+      "name": "dependency_integrity",
+      "scope": "per_ticket",
+      "checks": [
+        { "id": "D-01", "description": "All tasks in jira_depends_on exist in raw/ or validated/",                            "severity": "BLOCKER" },
+        { "id": "D-02", "description": "No dependency task is in the same sprint or a later sprint",                          "severity": "BLOCKER" },
+        { "id": "D-03", "description": "No circular dependency in the dependency chain",                                      "severity": "BLOCKER" },
+        { "id": "D-04", "description": "All tasks in jira_blocks reference this ticket's ID in their own jira_depends_on",    "severity": "WARNING" }
+      ]
+    },
+    {
+      "category_id": "C",
+      "name": "section_content_rules",
+      "scope": "per_ticket",
+      "checks": [
+        { "id": "C-01", "description": "Section 1 uses correct objective format",                                              "severity": "WARNING" },
+        { "id": "C-02", "description": "Section 1 does not contain forbidden words",                                           "severity": "BLOCKER" },
+        { "id": "C-03", "description": "Section 4 is non-empty when sprint > 1 and prior tasks exist",                         "severity": "BLOCKER" },
+        { "id": "C-04", "description": "Section 4 lists specific files not directories",                                        "severity": "WARNING" },
+        { "id": "C-05", "description": "Section 6 lists all dependent tickets",                                                 "severity": "WARNING" },
+        { "id": "C-06", "description": "Section 7 embeds conventions directly — no 'see X doc' references",                    "severity": "BLOCKER" },
+        { "id": "C-07", "description": "Section 7 includes exact branch name, commit format, PR title format",                  "severity": "BLOCKER" },
+        { "id": "C-08", "description": "Section 10 lists specific files to delete or revert",                                   "severity": "BLOCKER" },
+        { "id": "C-09", "description": "Section 11 includes Plan Review step marked as human approval required",                "severity": "BLOCKER" },
+        { "id": "C-10", "description": "Section 12 contains specific JSON operations not vague descriptions",                   "severity": "BLOCKER" },
+        { "id": "C-11", "description": "Section 12 references at least 05_context/project_context.json for update",            "severity": "BLOCKER" }
+      ]
+    },
+    {
+      "category_id": "CV",
+      "name": "coverage_validation",
+      "scope": "per_batch",
+      "checks": [
+        { "id": "CV-01", "description": "Every module in execution_plan.json has at least one ticket",                                         "severity": "BLOCKER" },
+        { "id": "CV-02", "description": "Every API endpoint in api_contracts.json is covered by at least one ticket's Section 5",              "severity": "BLOCKER" },
+        { "id": "CV-03", "description": "Every database table in database_schema.json is covered by at least one migration ticket",            "severity": "BLOCKER" },
+        { "id": "CV-04", "description": "Every integration task in integration_tasks.json has a corresponding ticket",                         "severity": "BLOCKER" },
+        { "id": "CV-05", "description": "Every shared utility in execution_plan.json → shared_utilities has a corresponding ticket",           "severity": "BLOCKER" },
+        { "id": "CV-06", "description": "Total ticket count matches execution_plan.json → total_tasks",                                        "severity": "WARNING" }
+      ]
+    },
+    {
+      "category_id": "F",
+      "name": "file_operation_consistency",
+      "scope": "per_batch",
+      "checks": [
+        { "id": "F-01", "description": "No two tickets in the same sprint declare they create the same file",                                   "severity": "BLOCKER" },
+        { "id": "F-02", "description": "A ticket that modifies a file has a dependency on the ticket that creates it",                         "severity": "BLOCKER" },
+        { "id": "F-03", "description": "No ticket deletes a file that a later ticket modifies",                                                 "severity": "BLOCKER" },
+        { "id": "F-04", "description": "All files in file_operations.creates are listed as deliverables in Section 8",                         "severity": "WARNING" }
+      ]
+    }
+  ],
+
+  "severity_definitions": {
+    "BLOCKER": {
+      "description": "A fundamental error making the ticket incorrect, ambiguous, or unexecutable.",
+      "effect": "Ticket FAILS. Cannot be moved to validated. Must be corrected and resubmitted."
+    },
+    "WARNING": {
+      "description": "A quality issue that does not block execution but should be fixed.",
+      "effect": "Ticket PASSES but warning is recorded."
+    }
+  },
+
+  "sprint_pass_rule": {
+    "rule": "All-or-nothing per sprint. If ANY ticket in a sprint FAILS, NO tickets from that sprint move to validated.",
+    "rationale": "Partial sprints create inconsistent dependency states. A failed ticket may be a dependency of a passed ticket."
+  },
+
+  "outputs": {
+    "files": [
+      {
+        "path": "04_tickets/validated/TASK-XXX-<title>.json",
+        "description": "Copy of passed ticket. Written only when entire sprint passes.",
+        "written_by": "TicketValidator-1.0",
+        "condition": "overall_status = PASS"
+      },
+      {
+        "path": "04_tickets/validation_report.json",
+        "description": "Full validation results. Always written, even on PASS.",
+        "written_by": "TicketValidator-1.0",
+        "condition": "always"
+      },
+      {
+        "path": "04_tickets/validation_feedback/TASK-XXX-feedback.json",
+        "description": "Per-ticket feedback file for FAIL tickets. Sent to JiraOrchestrator.",
+        "written_by": "TicketValidator-1.0",
+        "condition": "ticket status = FAIL"
+      }
+    ]
+  },
+
+  "absolute_rules": [
+    { "id": "R1", "rule": "Never pass a ticket with a broken architecture reference (broken JSON path)." },
+    { "id": "R2", "rule": "Never pass a ticket with fewer acceptance criteria than the risk-level minimum." },
+    { "id": "R3", "rule": "Never pass a ticket using forbidden vague language in Section 1 or Section 8." },
+    { "id": "R4", "rule": "Never pass a ticket for Sprint N if a dependency ticket is also in Sprint N or later." },
+    { "id": "R5", "rule": "Never pass a ticket missing Section 12 (Context Update Instructions)." },
+    { "id": "R6", "rule": "Never push to JIRA. Write to 04_tickets/validated/ only." },
+    { "id": "R7", "rule": "Never partially pass a sprint. All tickets in a sprint must pass or none move to validated." },
+    { "id": "R8", "rule": "Always produce validation_report.json for every run, even when all tickets pass." }
+  ],
+
+  "error_conditions": [
+    { "condition": "04_tickets/raw/ is empty",           "action": "Halt. Report VALIDATOR_INPUT_ERROR: no tickets to validate." },
+    { "condition": "Architecture file does not exist",   "action": "Halt. All referencing tickets auto-fail A-01. Report missing file." },
+    { "condition": "execution_plan.json is malformed",   "action": "Halt. Report VALIDATOR_INPUT_ERROR. Cannot validate coverage." },
+    { "condition": "Ticket file is malformed JSON",      "action": "Auto-fail S-01. Continue validating other tickets." },
+    { "condition": "Circular dependency detected",       "action": "Halt validation for affected sprint. Report full dependency cycle." }
+  ],
+
+  "validation_report_schema": {
+    "required_fields": [
+      "validation_run_id", "validated_at", "validated_by", "execution_plan_id",
+      "sprint_validated", "architecture_version",
+      "summary.total_tickets_evaluated", "summary.passed", "summary.failed",
+      "summary.warnings", "summary.overall_status",
+      "ticket_results", "coverage_results", "file_operation_conflicts", "action_required"
+    ],
+    "run_id_format": "VRUN-<YYYYMMDD>-<sequence>"
+  }
+}
