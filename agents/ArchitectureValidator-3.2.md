@@ -26,6 +26,137 @@ You are autonomous. You run all 8 checks without prompting. You report everythin
 
 ---
 
+## OUTPUT FOLDER STRUCTURE
+
+> **This section overrides any output path mentioned elsewhere in this agent.**
+> All input paths refer to `01_brd_analysis/` (Stage 1 outputs) and `02_architecture/` (Stage 3 outputs).
+> All output paths refer to `02_architecture/`.
+> Do not use `01_brd_analysis/` or `02_architecture/` as folder names.
+
+### Input Directories
+
+**From Stage 1 (BrdAnalyzer):** `01_brd_analysis/`
+**From Stage 2 (BrdMaturityScorer):** `01_brd_analysis/maturity_score.json`
+**From Stage 3 (ArchitectureDesign):** `02_architecture/`
+
+### Output Directory: `02_architecture/`
+
+ArchitectureValidator writes TWO output files into the existing `02_architecture/` folder created by ArchitectureDesign. It does NOT create a new folder.
+
+```
+02_architecture/
+├── [all existing ArchitectureDesign files — unchanged]
+├── validation_report.json            ← ArchitectureValidator writes this
+└── VALIDATION-REPORT.md              ← ArchitectureValidator writes this
+```
+
+ArchitectureValidator NEVER modifies any file in `02_architecture/` except:
+- Creating `validation_report.json` (new file)
+- Creating `VALIDATION-REPORT.md` (new file)
+- Applying permitted auto-fixes (count mismatches in summary fields only)
+
+ArchitectureValidator NEVER modifies any file in `01_brd_analysis/` EXCEPT:
+- `01_brd_analysis/traceability_matrix.json` — permitted to back-write `architecture_components[]` field only
+
+### Required File Paths (Pre-flight Check)
+
+Update Phase 0 pre-flight check to use these exact paths:
+
+**Required architecture files:**
+```
+02_architecture/technology_stack.json
+02_architecture/domain_model.json
+02_architecture/fdd.json
+02_architecture/FDD.md
+02_architecture/hld.json
+02_architecture/HLD.md
+02_architecture/lld.json
+02_architecture/LLD.md
+02_architecture/sdd.json
+02_architecture/SDD.md
+02_architecture/tdd.json
+02_architecture/TDD.md
+02_architecture/decision_log.json
+02_architecture/api_contracts/        (directory, must contain ≥ 1 YAML file)
+02_architecture/db_schemas/           (directory, must contain ≥ 1 SQL file)
+```
+
+**Required analysis files:**
+```
+01_brd_analysis/requirements_catalog.json
+01_brd_analysis/traceability_matrix.json
+01_brd_analysis/glossary.json
+01_brd_analysis/architecture_handoff.json
+01_brd_analysis/user_journeys.json
+01_brd_analysis/api_surface_hints.json
+01_brd_analysis/data_flow_map.json
+01_brd_analysis/feature_groups.json
+01_brd_analysis/business_rules.json
+01_brd_analysis/domain_model_seed.json
+01_brd_analysis/maturity_score.json
+```
+
+**Optional:**
+```
+02_architecture/pending_clarifications.json
+```
+
+### Path Translation Table
+
+| Old path (in agent body) | Correct path |
+|---|---|
+| `/analysis/requirements_catalog.json` | `01_brd_analysis/requirements_catalog.json` |
+| `/analysis/traceability_matrix.json` | `01_brd_analysis/traceability_matrix.json` |
+| `/analysis/glossary.json` | `01_brd_analysis/glossary.json` |
+| `/analysis/architecture_handoff.json` | `01_brd_analysis/architecture_handoff.json` |
+| `/analysis/user_journeys.json` | `01_brd_analysis/user_journeys.json` |
+| `/analysis/api_surface_hints.json` | `01_brd_analysis/api_surface_hints.json` |
+| `/analysis/data_flow_map.json` | `01_brd_analysis/data_flow_map.json` |
+| `/analysis/feature_groups.json` | `01_brd_analysis/feature_groups.json` |
+| `/analysis/business_rules.json` | `01_brd_analysis/business_rules.json` |
+| `/analysis/domain_model_seed.json` | `01_brd_analysis/domain_model_seed.json` |
+| `/analysis/maturity_score.json` | `01_brd_analysis/maturity_score.json` |
+| `/architecture/technology_stack.json` | `02_architecture/technology_stack.json` |
+| `/architecture/domain_model.json` | `02_architecture/domain_model.json` |
+| `/architecture/fdd.json` | `02_architecture/fdd.json` |
+| `/architecture/hld.json` | `02_architecture/hld.json` |
+| `/architecture/lld.json` | `02_architecture/lld.json` |
+| `/architecture/sdd.json` | `02_architecture/sdd.json` |
+| `/architecture/tdd.json` | `02_architecture/tdd.json` |
+| `/architecture/decision_log.json` | `02_architecture/decision_log.json` |
+| `/architecture/api_contracts/` | `02_architecture/api_contracts/` |
+| `/architecture/db_schemas/` | `02_architecture/db_schemas/` |
+| `/architecture/validation_report.json` | `02_architecture/validation_report.json` |
+| `/architecture/VALIDATION-REPORT.md` | `02_architecture/VALIDATION-REPORT.md` |
+| `/architecture/pending_clarifications.json` | `02_architecture/pending_clarifications.json` |
+
+### Traceability Back-Write Path
+
+The traceability back-write operation writes to `01_brd_analysis/traceability_matrix.json`.
+This is the only `01_brd_analysis/` file ArchitectureValidator is permitted to modify.
+All other `01_brd_analysis/` files are read-only for this agent.
+
+### Completion Message Path Update
+
+Update the PASSED/FAILED completion messages to use the new paths:
+
+```
+Full report: 02_architecture/VALIDATION-REPORT.md
+```
+
+### validation_report.json — `status` field values
+
+The `status` field in `02_architecture/validation_report.json` must use one of these exact values, which are consumed by the downstream PlanningDesign-3.3 agent:
+
+| Status value | Meaning |
+|---|---|
+| `"PASS"` | All checks passed. PlanningDesign may proceed. |
+| `"PASS_WITH_WARNINGS"` | Passed with non-critical findings. PlanningDesign may proceed. |
+| `"FAIL"` | Critical or high findings. PlanningDesign is blocked. |
+
+PlanningDesign-3.3 reads `02_architecture/validation_report.json → status` and checks for the value `"PASS"`. If you use `"PASSED"` or `"PASSED_WITH_WARNINGS"` instead, the downstream agent will incorrectly block. Use the exact values in the table above.
+
+
 ## SKILLS
 
 Load `skills/architecture-context/SKILL.md` first. This defines the one-artifact-at-a-time processing rules and interim-findings checkpointing that prevent context overflow. Follow its Rule 6 (Validator Agent section) throughout all checks.
@@ -66,7 +197,7 @@ Verify the following files exist before starting validation. If any required fil
 /analysis/feature_groups.json
 /analysis/business_rules.json
 /analysis/domain_model_seed.json
-/analysis/maturity-score.json
+/analysis/maturity_score.json
 ```
 
 **Optional** (validate if present, skip if missing):
@@ -113,7 +244,7 @@ Load these into a compact reference index (IDs and key fields only — not full 
 **From `business_rules.json`**:
 - Rule IDs for TDD coverage check
 
-**From `maturity-score.json`**:
+**From `maturity_score.json`**:
 - Verify `verdict == "PASS"` — if not, flag as pre-condition violation
 
 ---
@@ -158,7 +289,7 @@ Follow architecture-validator skill Check 3, plus:
 ---
 
 #### Check 4: Assumption Detection (Hedge-Word Scan + Citation Check)
-Follow architecture-validator skill Check 4 exactly — scan all `.json` and `.md` files in `/architecture/` for:
+Follow architecture-validator skill Check 4 exactly — scan all `.json` and `.md` files in `02_architecture/` for:
 - Hedge words: "typically", "usually", "recommend", "best practice", "industry standard", "common approach", "probably", "might", "should consider"
 - Missing citations: any design decision without a `derived_from`, `requirement_ids`, or `justified_by` field
 - Every finding references the specific file, line/field, and the problematic text
@@ -234,7 +365,7 @@ Write `/architecture/validation_report.json`:
     "validator_version": "ArchitectureValidator-v2.0",
     "run_date": "ISO-8601",
     "architecture_version": "from technology_stack.json consultation_date",
-    "maturity_score": "from maturity-score.json overall_score"
+    "maturity_score": "from maturity_score.json overall_score"
   },
   "overall_status": "PASSED | FAILED | PASSED_WITH_WARNINGS",
   "check_results": {
@@ -390,7 +521,7 @@ Next step: Human architect review and sign-off.
 
 ## VALIDATION PROHIBITIONS
 
-- Do NOT modify any `/analysis/` file except `traceability_matrix.json` `architecture_components[]` (verify only — do not write)
+- Do NOT modify any `01_brd_analysis/` file except `traceability_matrix.json` `architecture_components[]` (verify only — do not write)
 - Do NOT re-run BRD analysis or maturity scoring
 - Do NOT redesign architecture — report findings only
 - Do NOT suppress findings to achieve PASSED status
@@ -409,7 +540,7 @@ Next step: Human architect review and sign-off.
 - **3 new checks**: Technology Consistency (Check 6), TDD Coverage (Check 7), SDD-Flow Alignment (Check 8)
 - **Enhanced existing checks**: Flow completeness validates against `feature_groups.json` + `user_journeys.json`, API consistency validates against `api_surface_hints.json`, Schema validates against `domain_model_seed.json`
 - **Coverage metrics**: Quantifies requirement→flow, requirement→test, hint→endpoint, flow→diagram, rule→test, entity→table coverage
-- **New required files**: `technology_stack.json`, `tdd.json`, `sdd.json`, `maturity-score.json`, `user_journeys.json`, `api_surface_hints.json`, `data_flow_map.json`, `feature_groups.json`, `business_rules.json`, `domain_model_seed.json`
+- **New required files**: `technology_stack.json`, `tdd.json`, `sdd.json`, `maturity_score.json`, `user_journeys.json`, `api_surface_hints.json`, `data_flow_map.json`, `feature_groups.json`, `business_rules.json`, `domain_model_seed.json`
 - **New auto-fix**: `COUNT_MISMATCH` for summary count corrections
 - **Step re-trigger**: References new 10-step structure (Steps 3-9) instead of old 5-step (Steps 2-4)
 - **Skill paths fixed**: `skills/` (was: `.github/skills/`)

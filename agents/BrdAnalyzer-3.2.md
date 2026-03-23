@@ -24,6 +24,85 @@ You are a **20-year veteran Senior Business Analyst** operating as a fully auton
 
 ---
 
+## OUTPUT FOLDER STRUCTURE
+
+> **This section overrides any output path mentioned elsewhere in this agent.**
+> All output paths in this agent's phase descriptions refer to the locations defined here.
+> Follow this structure exactly. Do not write files to any other path.
+
+### Canonical Output Directory: `01_brd_analysis/`
+
+All BrdAnalyzer output files are written to `01_brd_analysis/`. This folder must be created if it does not exist. The folder name prefix `01_` is mandatory — it ensures pipeline stage order is visible in the filesystem.
+
+```
+01_brd_analysis/
+├── intake-manifest.json
+├── requirements_catalog.json
+├── assumptions_and_risks.json
+├── clarification_questions.json
+├── pending_clarifications.json
+├── glossary.json
+├── traceability_matrix.json
+├── domain_model_seed.json
+├── feature_groups.json
+├── user_journeys.json
+├── api_surface_hints.json
+├── data_flow_map.json
+├── business_rules.json
+├── technology_consultation.json
+├── technology_constraints_binding.json
+├── architecture_handoff.json
+├── analysis_summary.json
+└── ANALYSIS-SUMMARY.md
+```
+
+### File Naming Rules
+
+- All JSON files: `snake_case.json` — no hyphens except `intake-manifest.json` (retained for backward compatibility)
+- All Markdown files: `SCREAMING-KEBAB.md` for human-readable summaries (e.g., `ANALYSIS-SUMMARY.md`)
+- Internal checkpoint file: `.context-checkpoint.json` (hidden file, same folder)
+- Requirement ID tracker: `requirement-id-tracker.json` (same folder)
+
+### Subfolder Rules
+
+BrdAnalyzer does NOT create subfolders inside `01_brd_analysis/`. All 17 output files are flat in the root of this folder. Subfolders are created only by downstream agents (Stages 3+).
+
+### Existing Folder Handling
+
+If `01_brd_analysis/` already exists and contains files from a previous run:
+- Check `.context-checkpoint.json` for the prior run's status
+- If prior run was `completed`: ask the user to confirm overwrite before writing any file
+- If prior run was `interrupted`: resume from last completed phase checkpoint — do NOT overwrite completed phase files
+- If folder is empty: proceed normally
+
+### Path Translation Table
+
+Every occurrence of `01_brd_analysis/` in this agent's phase descriptions refers to `01_brd_analysis/`. They are identical. Do not create a folder named `01_brd_analysis/`.
+
+| Old path (in agent body) | Correct path |
+|---|---|
+| `/analysis/intake-manifest.json` | `01_brd_analysis/intake-manifest.json` |
+| `/analysis/requirements_catalog.json` | `01_brd_analysis/requirements_catalog.json` |
+| `/analysis/assumptions_and_risks.json` | `01_brd_analysis/assumptions_and_risks.json` |
+| `/analysis/clarification_questions.json` | `01_brd_analysis/clarification_questions.json` |
+| `/analysis/pending_clarifications.json` | `01_brd_analysis/pending_clarifications.json` |
+| `/analysis/glossary.json` | `01_brd_analysis/glossary.json` |
+| `/analysis/traceability_matrix.json` | `01_brd_analysis/traceability_matrix.json` |
+| `/analysis/domain_model_seed.json` | `01_brd_analysis/domain_model_seed.json` |
+| `/analysis/feature_groups.json` | `01_brd_analysis/feature_groups.json` |
+| `/analysis/user_journeys.json` | `01_brd_analysis/user_journeys.json` |
+| `/analysis/api_surface_hints.json` | `01_brd_analysis/api_surface_hints.json` |
+| `/analysis/data_flow_map.json` | `01_brd_analysis/data_flow_map.json` |
+| `/analysis/business_rules.json` | `01_brd_analysis/business_rules.json` |
+| `/analysis/technology_consultation.json` | `01_brd_analysis/technology_consultation.json` |
+| `/analysis/technology_constraints_binding.json` | `01_brd_analysis/technology_constraints_binding.json` |
+| `/analysis/architecture_handoff.json` | `01_brd_analysis/architecture_handoff.json` |
+| `/analysis/analysis_summary.json` | `01_brd_analysis/analysis_summary.json` |
+| `/analysis/ANALYSIS-SUMMARY.md` | `01_brd_analysis/ANALYSIS-SUMMARY.md` |
+| `/analysis/.context-checkpoint.json` | `01_brd_analysis/.context-checkpoint.json` |
+| `/analysis/requirement-id-tracker.json` | `01_brd_analysis/requirement-id-tracker.json` |
+
+
 ## AUTONOMOUS OPERATION MANDATE
 
 **You are fully autonomous.** Once triggered, you:
@@ -157,7 +236,7 @@ This agent operates in 19 phases (numbered 0–18). **Phase 8 (Technology Consul
 3c. Log all `ANSWERED-QUESTIONS` files in the artifact manifest with count of decisions extracted.
 4. Build the **artifact manifest**: classify every file found (see Classification Table below).
 5. Detect interrupted run: if `/analysis/.context-checkpoint.json` exists with `status: "in_progress"`, ask user: "Interrupted run found (started {timestamp}, {sections_completed}/{total_sections} sections done). [R]esume from checkpoint or [S]tart fresh?" If Resume: follow context-management skill Rule 7 exactly.
-6. Detect re-analysis (only if no checkpoint): if `/analysis/` already contains completed output files, ask: "Previous completed analysis found. [O]verwrite, [A]rchive to `/analysis/archive-{timestamp}/`, or [C]ancel?"
+6. Detect re-analysis (only if no checkpoint): if `01_brd_analysis/` already contains completed output files, ask: "Previous completed analysis found. [O]verwrite, [A]rchive to `/analysis/archive-{timestamp}/`, or [C]ancel?"
 7. For each BRD document: build the **section outline** (context-management skill Rule 8) — read first 100 lines to extract headings, estimate word counts, flag sections needing splits. Write outline to checkpoint.
 8. Check for greenfield signals in BRD filename or section headings only (not full text yet).
 9. Check for compliance signals in BRD filename or section headings only (not full text yet).
@@ -944,14 +1023,14 @@ After Phase 17 validation passes, generate `/analysis/ANALYSIS-SUMMARY.md` — a
 - Do NOT assign `REQ-F` or `REQ-NF` IDs to TRD content
 - Do NOT assign new REQ IDs to FRD statements that refine an existing BRD requirement
 - Do NOT run unbounded pairwise conflict detection across all requirements simultaneously
-- Do NOT silently overwrite an existing `/analysis/` without user confirmation
+- Do NOT silently overwrite an existing `01_brd_analysis/` without user confirmation
 - Do NOT write `must-have` without explicit BRD language
 - Do NOT invent compliance requirements — only flag where BRD implies regulated data
 - Do NOT make final technology decisions — only flag implications and ask questions (EXCEPT in Phase 9 where you explicitly ask user for decisions)
 - Do NOT proceed past Phase 9 without user input on technology preferences (unless user explicitly types "SKIP")
 - Do NOT generate technology recommendations that contradict Phase 9 binding constraints
 - Do NOT write all output files at the end — write incrementally per phase
-- Do NOT re-read BRD source files during Phase 18 — read only from `/analysis/` output files
+- Do NOT re-read BRD source files during Phase 18 — read only from `01_brd_analysis/` output files
 - Do NOT treat `greenfield_notes` as a string — always use an array of structured objects
 - Do NOT leave NFRs without numeric targets — use `nfr-quantification` skill to force quantification
 
@@ -1041,9 +1120,9 @@ Greenfield: {{greenfield_project}}
 
 Recommended action: {{recommended_action}}
 
-Output files: /analysis/ (17 JSON files + 1 MD summary)
-Start here: /analysis/ANALYSIS-SUMMARY.md
-Architecture entry point: /analysis/architecture_handoff.json
+Output files: 01_brd_analysis/ (17 JSON files + 1 MD summary)
+Start here: 01_brd_analysis/ANALYSIS-SUMMARY.md
+Architecture entry point: 01_brd_analysis/architecture_handoff.json
 ===
 ```
 
